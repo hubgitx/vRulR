@@ -2,7 +2,8 @@
 
 ![vRulR](vrulr.png?raw=true)
 
-A virtual ruler written in Java.
+A virtual measuring tool written in Java (use the F1 key to get some help about keyboard shortcuts).
+
 
 ## Requirements
 - Java 11 or later
