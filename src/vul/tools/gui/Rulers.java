@@ -57,11 +57,13 @@ import javax.swing.text.PlainDocument;
 
 public class Rulers extends KeyAdapter {
   private static final String TITLE = "vRulR";
-  public static final String VERSION_NUMBER = "1.0.0";
-  public static final String VERSION = TITLE + " " + VERSION_NUMBER + " - 2026/09/25";
+  private static final String VERSION_NUMBER = "1.0.0";
+  private static final boolean SNAPSHOT = true;
+  public static final String VERSION = TITLE + " " + VERSION_NUMBER + (SNAPSHOT ? "-SNAPSHOT" : "") + " - 2026/09/29";
 
   private static final String HELP_TEXT = "<html><table border=0>" +
-                                          " <tr><td colspan='2' style='text-align:center'>" + VERSION + "</td></tr>" +
+                                          " <tr><td colspan='2' style='text-align:center'><u>" + VERSION + "</u></td></tr>" +
+                                          " <tr><td colspan='2' style='text-align:center'>(c) <i>very useless lessons</i> featuring <i>Horst Hacker & the Teer-100 Experience</i></td></tr>" +
                                           " <tr><td>'SPACE'</td><td>toggle horizontal/vertical ruler layout</td></tr>" +
                                           " <tr><td>'CTRL + SPACE'</td><td>toggle the scale layout (top/bottom for the horzontal" +
                                                                            " and left/right for the vertical ruler layout)</td></tr>" +
@@ -109,7 +111,7 @@ public class Rulers extends KeyAdapter {
   private final HorRuler horRuler;
   private final VertRuler vertRuler;
   
-  private final S11n s13n;
+  private final S11n s11n;
   
   
   public static void main(String[] args) {
@@ -143,14 +145,14 @@ public class Rulers extends KeyAdapter {
   
   
   Rulers() throws IOException {
-    s13n = new S11n();
-    s13n.load();
+    s11n = new S11n();
+    s11n.load();
 
     final MouseHandler mh = new MouseHandler();
     final KeyHandler kh = new KeyHandler();
     final CloseHandler ch = new CloseHandler();
     
-    horRuler = new HorRuler(s13n.getHorSettings());
+    horRuler = new HorRuler(s11n.getHorSettings());
     horRuler.addMouseListener(mh);
     horRuler.addMouseMotionListener(mh);
     horRuler.addKeyListener(kh);
@@ -158,7 +160,7 @@ public class Rulers extends KeyAdapter {
     horRuler.addWindowListener(ch);
     horRuler.setIconImages(GraFix.appIcons());
     
-    vertRuler = new VertRuler(s13n.getVertSettings());
+    vertRuler = new VertRuler(s11n.getVertSettings());
     vertRuler.addMouseListener(mh);
     vertRuler.addMouseMotionListener(mh);
     vertRuler.addKeyListener(kh);
@@ -175,17 +177,17 @@ public class Rulers extends KeyAdapter {
     if (evt.isControlDown() && (evt.getKeyCode() == KeyEvent.VK_S)) {
       evt.consume();
       
-      Settings s = s13n.getHorSettings();
+      Settings s = s11n.getHorSettings();
       s.setX(horRuler.getX());
       s.setY(horRuler.getY());
       s.setLength(horRuler.getWidth());
       
-      s = s13n.getVertSettings();
+      s = s11n.getVertSettings();
       s.setX(vertRuler.getX());
       s.setY(vertRuler.getY());
       s.setLength(vertRuler.getHeight());
       
-      try { s13n.write(); }
+      try { s11n.write(); }
       catch (IOException ex) { ex.printStackTrace(); }
     }
   }
@@ -221,13 +223,19 @@ public class Rulers extends KeyAdapter {
   void dispose() { horRuler.dispose(); vertRuler.dispose(); if (helpDlg != null) helpDlg.dispose(); }
   
   private JDialog helpDlg;
+  @SuppressWarnings("serial")
   void showHelp() {
-    // modal:
-//    JOptionPane.showMessageDialog(activeRuler, HELP_TEXT, TITLE + " - help", JOptionPane.PLAIN_MESSAGE);
-    
-    // nicht-modal
     if (helpDlg == null) {
-      helpDlg = new JOptionPane(HELP_TEXT, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION).createDialog(TITLE + " - help");
+      helpDlg = new JOptionPane(HELP_TEXT, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION) {
+        @Override
+        public void paintComponent(Graphics g) {
+          ((Graphics2D)g).setRenderingHint(
+              RenderingHints.KEY_TEXT_ANTIALIASING,
+              RenderingHints.VALUE_TEXT_ANTIALIAS_GASP
+          );
+          super.paintComponent(g);
+        }
+      }.createDialog(TITLE + " - help");
       helpDlg.setIconImages(GraFix.APP_ICONS);
       helpDlg.setModal(false);
       helpDlg.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
@@ -264,52 +272,11 @@ public class Rulers extends KeyAdapter {
       }
     }
     
-    private int calcMoveFactor(KeyEvent evt) {
-      return (evt.isControlDown() ? 50 : 1);
-    }
+    private int calcMoveFactor(KeyEvent evt) { return (evt.isControlDown() ? 50 : 1); }
   }
   
   /////////////////////////////////////
   
-//  private final class MouseHandler extends MouseMotionAdapter implements MouseListener {
-//    private int dragX = 0, dragY = 0;
-//    boolean dragging;
-//
-//    @Override public void mouseMoved(MouseEvent evt) { updateRulerValue(evt.getX(), evt.getY()); }
-//
-//    @Override
-//    public void mousePressed(MouseEvent evt) {
-//      if (SwingUtilities.isLeftMouseButton(evt)) {
-//        dragX = evt.getX(); 
-//        dragY = evt.getY();
-//      }
-//    }
-//
-//    @Override 
-//    public void mouseDragged(MouseEvent evt) {
-//      if (SwingUtilities.isLeftMouseButton(evt)) {
-//        if (!dragging) {
-//          dragging = true;
-//          showMoveCursor();
-//        }
-//        
-//        int xOffset = evt.getX() - dragX, yOffset = evt.getY() - dragY;
-//        moveRuler(xOffset, yOffset);
-//      }
-//    }
-//    
-//    @Override public void mouseReleased(MouseEvent evt) { 
-//      if (SwingUtilities.isLeftMouseButton(evt)) {
-//        dragging = false;
-//        activeRuler.resetCursor();
-//      }
-//    }
-//
-//
-//    @Override public void mouseClicked(MouseEvent evt) { }
-//    @Override public void mouseEntered(MouseEvent evt) { }
-//    @Override public void mouseExited(MouseEvent evt) { }
-//  }
   private final class MouseHandler extends MouseMotionAdapter implements MouseListener {
     private final int modeNone = 0;
     private final int modeMove = 1;
@@ -319,7 +286,8 @@ public class Rulers extends KeyAdapter {
     private int startW = 0, startH = 0;
     private int dragStartX = 0, dragStartY = 0;
 
-    @Override public void mouseMoved(MouseEvent evt) {
+    @Override 
+    public void mouseMoved(MouseEvent evt) {
       int evtX = evt.getX();
       int evtY = evt.getY();
       if (isResizePickerArea(rulerComp(), evtX, evtY)) {
@@ -328,8 +296,6 @@ public class Rulers extends KeyAdapter {
         rulerComp().resetCursor();
         updateRulerValue(evtX, evtY);
       }
-      
-      /* TODO: show settings menu when in upper right area (or so) */ 
     }
 
     @Override
@@ -403,7 +369,7 @@ public class Rulers extends KeyAdapter {
   @SuppressWarnings("serial")
   private static abstract class AbstractRuler extends JFrame {
     protected int value = Integer.MIN_VALUE;
-    protected int activeMarkerPos = Integer.MIN_VALUE; // TODO: 'aktiven' Marker evtl. besonders kennzeichnen
+    protected int activeMarkerPos = Integer.MIN_VALUE;
     protected final JLabel valueLbl = new JLabel("0px", JLabel.CENTER);
     protected final Settings settings;
     
@@ -422,7 +388,6 @@ public class Rulers extends KeyAdapter {
       if (isAlwaysOnTopSupported()) setAlwaysOnTop(true);      
 
       JPanel p = new JPanel(new BorderLayout(4, 4));
-      //p.setBackground(BGRD_COLOR); // darum kümmert sich der FocusListener 
       p.add(rulerPanel(), panelLayoutPosition());
             
       valueLbl.setFont(FONT);
@@ -443,7 +408,7 @@ public class Rulers extends KeyAdapter {
         public void mouseClicked(MouseEvent evt) {
           int clickCnt = evt.getClickCount();
           if (SwingUtilities.isLeftMouseButton(evt) && (clickCnt == 2)) showInputDlg(AbstractRuler.this, evt.getX(), evt.getY()); // Marker anlegen
-          else if (SwingUtilities.isRightMouseButton(evt)) toggleMarker(true); // Marker entfernen (sofern vorhanden)
+          else if (SwingUtilities.isRightMouseButton(evt)) toggleMarker(true); // remove marker (if there's one)
         }
       });
 
@@ -454,7 +419,7 @@ public class Rulers extends KeyAdapter {
       InputDlg inputDlg = new InputDlg(r);
       inputDlg.inputField.setRange(0, Math.max(0, (r.direction() == SwingConstants.HORIZONTAL) ? r.getWidth() : r.getHeight()));
       inputDlg.setValue((r.direction() == SwingConstants.HORIZONTAL) ? posX : posY);      
-      inputDlg.setLocation(r.getX() + posX, r.getY() + posY); // Positionierung des Eingabefeldes (nicht relativ zum Elternfenster!?)
+      inputDlg.setLocation(r.getX() + posX, r.getY() + posY);
       inputDlg.setVisible(true);
       inputDlg.requestFocusInWindow();
     }
@@ -484,7 +449,6 @@ public class Rulers extends KeyAdapter {
     }
     
     void delActiveMarker() {
-      // gültige Markerposition für Löschung:
       if (activeMarkerPos != Integer.MAX_VALUE) {
         settings.markers.remove(activeMarkerPos);
         if (!updateActiveMarker(value)) rulerPanel().repaint();
@@ -492,14 +456,14 @@ public class Rulers extends KeyAdapter {
     }
     
     protected boolean updateActiveMarker(int pos) {
-      if (settings.markers.isEmpty()) return false; // nichts zu vergleichen
+      if (settings.markers.isEmpty()) return false; // nothing to compare
       
       int nearestMarkerPos = Integer.MAX_VALUE;
       int dist;
       for (int markerPos : settings.markers) {
         dist = Math.abs(pos - markerPos);
-        if (dist > DISTANCE_MARKER_SENSITIVITY) continue; // Abstand zu groß -> Marker ignorieren
-        else if (dist < Math.abs(pos - nearestMarkerPos))  nearestMarkerPos = markerPos; // wenn Abstand kleiner als bis jetzt kleinster Abstand -> Markerposition übernehmen
+        if (dist > DISTANCE_MARKER_SENSITIVITY) continue; // distance too large -> ignore marker
+        else if (dist < Math.abs(pos - nearestMarkerPos))  nearestMarkerPos = markerPos; // new nearest marker
       }
       
       if (activeMarkerPos != nearestMarkerPos) { 
@@ -508,12 +472,12 @@ public class Rulers extends KeyAdapter {
         rulerPanel().repaint();
         return true;
       }
-      // keine Änderung
+      // no change
       return false;
     }    
 
     
-    /** @return SwingConstants.HORIZONTAL oder SwingConstants.VERTICAL */
+    /** @return SwingConstants.HORIZONTAL or SwingConstants.VERTICAL */
     protected abstract int direction(); 
     protected abstract void changeSizeBy(int px);
     protected abstract AbstractRulerPanel rulerPanel();   
@@ -542,8 +506,7 @@ public class Rulers extends KeyAdapter {
       protected void preparePainting(Graphics g, int w, int h) {
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         
-        // Panel ist nicht opaque, Dlg-Bgrd scheint durch und muss hier nicht extra gemalt werden
-//        g.fillRect(0, 0, w, h);
+//        g.fillRect(0, 0, w, h); // panel is transparent, the dialog background shines through 
         g.setColor(FGRD_COLOR);
         g.setFont(FONT);
       }
@@ -577,7 +540,7 @@ public class Rulers extends KeyAdapter {
       if (this.value != x) {
         this.value = x;
         valueLbl.setText(String.valueOf(x) + "px");
-        // Marker:
+        // markers:
         updateActiveMarker(x);
       }
     }
@@ -586,8 +549,6 @@ public class Rulers extends KeyAdapter {
     
     @Override protected AbstractRulerPanel rulerPanel() { return rulerPanel; }
     
-    
-
     ///////////////////////////////////
     
     private final class HorRulerPanel extends AbstractRulerPanel {
@@ -632,7 +593,7 @@ public class Rulers extends KeyAdapter {
     }
   }
   
-  ///////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
   
   @SuppressWarnings("serial")
   private static final class VertRuler extends AbstractRuler {
@@ -687,7 +648,7 @@ public class Rulers extends KeyAdapter {
             g.setColor(FGRD_COLOR_STRONG);
             g.drawLine(x1, y, x2 + (settings.scaleFlipped ? -6 : 6), y);
             g.setColor(FGRD_COLOR);
-            // Zahlen der Skala:
+            // numbers of the scale:
             String s = String.valueOf(y);
             if (settings.scaleFlipped) g.drawString(s, x2 - (8 + GraFix.stringWidth(s, g)), y + FONTSIZE); 
             else g.drawString(s, x2 + 8, y + FONTSIZE);
@@ -748,7 +709,7 @@ public class Rulers extends KeyAdapter {
     private static final ArrayList<Image> APP_ICONS = new ArrayList<Image>(ICON_SIZES.length);
     static ArrayList<Image> appIcons() {
       if (APP_ICONS.isEmpty()) {
-        // Icons malen:
+        // paint icons:
         for (int size : ICON_SIZES) APP_ICONS.add(drawIcon(size));
       }
       return APP_ICONS;
@@ -841,7 +802,7 @@ public class Rulers extends KeyAdapter {
   }
   
   
-  /** Bean mit Einstellungen (u.a. für Serialisierung) */
+  /** Persistable settings bean */
   public static final class Settings {
     private int x, y;
     private int length;
@@ -873,7 +834,7 @@ public class Rulers extends KeyAdapter {
   }
   
   /////////////////////////////////////////////////////////
-  // Eingabefeld für Markerpositionen:
+  // marker position input field:
   @SuppressWarnings("serial")
   private static final class InputDlg extends JDialog {
     final LongField inputField;
@@ -908,7 +869,7 @@ public class Rulers extends KeyAdapter {
     
     
     ///////////////////////////////////
-    /** Textfeld für Ganzzahlen. */
+    /** Textfield for Integers */
     public static final class LongField extends JTextField {
       private static final long serialVersionUID = 1L;
       private long maxVal = Long.MAX_VALUE;
@@ -954,7 +915,7 @@ public class Rulers extends KeyAdapter {
       
       /////////////////////////////////////
 
-      /** <code>Document</code>-Implementierung für {@link LongField}. */
+      /** <code>Document</code> implementation for {@link LongField}. */
       class LongDocument extends PlainDocument {
         private static final long serialVersionUID = 1L;
 
